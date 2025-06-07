@@ -91,8 +91,7 @@ class ProgramaEn2 : AccionRevisionPrograma {
                 sponsors,
                 mitadDeDuracion,
                 titulo2,
-                dias,
-                grilla
+                dias
             )
         )
 
@@ -103,38 +102,29 @@ class ProgramaEn2 : AccionRevisionPrograma {
                 sponsors,
                 mitadDeDuracion,
                 titulo1,
-                dias,
-                grilla
+                dias
             )
         )
     }
 }
 
-
 object ProgramFactory {
-    val observersNuevoPrograma = mutableListOf<ObserverNuevoPrograma>()
     fun crear(
         conductoresNuevo: MutableList<Conductor>,
         presupuestoNuevo: Int,
         sponsorsNuevo: MutableList<String>,
         duracionNuevo: Int,
         tituloNuevo: String,
-        diasNuevo: DayOfWeek,
-        grilla: Grilla
-    ): Programa {
-        val nuevoPrograma = Programa().apply {
+        diasNuevo: DayOfWeek): Programa{
+        return Programa().apply {
             titulo = tituloNuevo
             conductores = conductoresNuevo
             presupuesto = presupuestoNuevo
             sponsors = sponsorsNuevo
             duracion = duracionNuevo
             dias = diasNuevo
-        }
-        observersNuevoPrograma.forEach {
-            it.notificarNuevoPrograma(nuevoPrograma, grilla)
-        }
 
-        return nuevoPrograma
+        }
     }
 }
 
@@ -195,8 +185,7 @@ class FusionDeProgramas : AccionRevisionPrograma{
                 sponsors,
                 duracion,
                 titulo,
-                dias,
-               grilla
+                dias
         )
         )
     }
@@ -208,82 +197,14 @@ class CambioDeDia(val nuevoDia: DayOfWeek): AccionRevisionPrograma{
     }
 }
 
-// observer
-data class CondicionDeRevision(
-    val restriccion: Restriccion,
-    val accion: AccionRevisionPrograma
-)
-
-class ProcesoRevision {
-    private val condiciones = mutableListOf<CondicionDeRevision>()
-    private val programasEnRevision = mutableListOf<Programa>()
-
-    fun agregarCondicion(condicion: CondicionDeRevision) {
-        condiciones.add(condicion)
-    }
-
-    fun agregarPrograma(programa: Programa) {
-        programasEnRevision.add(programa)
-    }
-
-    fun revisar(grilla: Grilla) {
-        programasEnRevision.forEach { programa ->
-            condiciones.firstOrNull { !it.restriccion.cumple(programa) }?.let {
-                it.accion.ejecutar(programa, grilla)
-            }
-        }
-    }
-
-    fun quitarProgramasFueraDeGrilla(grilla: Grilla) {
-        programasEnRevision.removeIf { programa -> !grilla.programas.contains(programa) }
-    }
-}
-
-interface ObserverNuevoPrograma {
-    fun notificarNuevoPrograma(programa: Programa, grilla: Grilla)
-}
-
-class NotificarConductores(val servicioMail: ServicioMail) : ObserverNuevoPrograma{
-    override fun notificarNuevoPrograma(programa: Programa, grilla: Grilla) {
-        programa.mailConductores().forEach{
-            servicioMail.enviarMail(Mail(
-                from = "programacion@canal.tv",
-                to = it,
-                subject = "Oportunidad!",
-                content = "Fuiste seleccionado para conducir ${programa.titulo}! Ponete en contacto con la gerencia."))
-        }
-    }
-}
-
-class NotificarCliowinPorMail(val servicioMail: ServicioMail) : ObserverNuevoPrograma {
-    override fun notificarNuevoPrograma(programa: Programa, grilla: Grilla) {
-        if (programa.presupuesto > 100_000) {
-            servicioMail.enviarMail(
-                Mail(
-                    from = "programacion@canal.tv",
-                    to = "cliowin@agencia.com",
-                    subject = "Urgente: Conseguir sponsor para programa",
-                    content = "${programa.presupuesto} - ${programa.titulo} - CONSEGUIR SPONSOR URGENTE!"
-                )
-            )
-        }
-    }
-}
-
-interface ServicioMail {
-    fun enviarMail(mail: Mail)
-}
-
-data class Mail(val from: String, val to: String, val subject: String, val content: String)
-
-class Grilla{
+class Grilla {
     val programas = mutableListOf<Programa>()
 
     fun agregarPrograma(programa: Programa) {
         programas.add(programa)
     }
 
-    fun removerPrograma(programa: Programa){
+    fun removerPrograma(programa: Programa) {
         programas.remove(programa)
     }
 }
